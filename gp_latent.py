@@ -7,6 +7,7 @@ import GPy
 import pandas as pd
 from scipy.optimize import minimize
 import autograd.numpy as np
+import numpy as np
 from autograd import value_and_grad
 from autograd import grad
 
@@ -186,8 +187,8 @@ class MFGPLatent(object):
 
     def loglike1(self, hyp1):
         n1 = self._training_data['X_0'].shape[0]
-        par = np.hstack([0, hyp1[1:]])
-        sig_e = np.exp(hyp1[0])
+        par = np.hstack([0, hyp1[1:]._value])
+        sig_e = np.exp(hyp1[0]._value)
         K_00 = self.kernel(self._training_data['Z_0'], self._training_data['Z_0'], par) + np.eye(n1) * sig_e
         L_00 = np.linalg.cholesky(K_00 + np.eye(n1) * self._jitter)
         alpha = np.linalg.solve(L_00.T, np.linalg.solve(L_00, self._training_data['Y_0']))
@@ -197,7 +198,7 @@ class MFGPLatent(object):
     def loglike2(self, hyp2):
         n2 = self._training_data['X_1'].shape[0]
         par = np.hstack([0, hyp2[1:]])
-        sig_e = np.exp(hyp2[0])
+        sig_e = np.exp(hyp2[0]._value)
         K_11 = self.kernel(self._training_data['Z_1'], self._training_data['Z_1'], par) + np.eye(n2) * sig_e
         L_11 = np.linalg.cholesky(K_11 + np.eye(n2) * self._jitter)
         H2 = np.hstack([np.ones((n2, 1)), self._training_data['Y_0'][-n2:,0].reshape(-1, 1)])
@@ -212,9 +213,9 @@ class MFGPLatent(object):
     def loglike3(self, hyp3):
         n3 = self._training_data['X_2'].shape[0]
         par = np.hstack([0, hyp3[1:]])
-        sig_e = np.exp(hyp3[0])
+        sig_e = np.exp(hyp3[0]._value)
         K_22 = self.kernel(self._training_data['Z_2'], self._training_data['Z_2'], par) + np.eye(n3) * sig_e
-        L_22 = np.linalg.cholesky(K_22, np.eye(n3) * self._jitter)
+        L_22 = np.linalg.cholesky(K_22 + np.eye(n3) * self._jitter)
         H3 = np.hstack([np.ones((n3, 1)), self._training_data['Y_1'][-n3:,0].reshape(-1, 1)])
         BIG = np.matmul(H3.T, np.linalg.solve(L_22.T, np.linalg.solve(L_22, H3)) )
         L_BIG = np.linalg.cholesky(BIG + np.eye(2) * self._jitter)
